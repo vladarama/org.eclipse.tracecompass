@@ -293,4 +293,24 @@ public class AggregatedCalledFunction extends AggregatedCallSite {
     public String toString() {
         return "Aggregate Function: " + getObject() + ", Duration: " + getDuration() + ", Self Time: " + fSelfTime + " on " + getNbCalls() + " calls"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
     }
+    /**
+     * Updates the statistic based on its statistics and other's one to compute the average statistic which is needed for merging
+     * flame graphs together.Unlike the mergedata in which the statistics of other node are added to the statistics of this node,
+     * in this function, the statistics are computed as the average of two node's statistic.
+     *
+     * @param other
+     *            the other weighted tree
+     */
+    public void meanData(WeightedTree<ICallStackSymbol> other) {
+        if (!(other instanceof AggregatedCalledFunction)) {
+            return;
+        }
+        AggregatedCalledFunction otherFct = (AggregatedCalledFunction) other;
+        fDuration = (fDuration  + otherFct.getDuration()) / 2;
+        fSelfTime = (fSelfTime  + otherFct.getDuration()) / 2;
+        fCpuTime = (fCpuTime  + otherFct.getDuration()) / 2;
+
+        getFunctionStatistics().merge(otherFct.getFunctionStatistics(), true);
+        mergeProcessStatuses(otherFct);
+    }
 }
